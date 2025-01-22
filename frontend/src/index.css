@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Add some global styles */
+body {
+  @apply bg-gray-50;
+}
+
+/* Optional: Add some focus styles */
+*:focus {
+  @apply outline-none;
+}

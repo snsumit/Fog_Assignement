@@ -7,7 +7,6 @@ dotenv.config();
 
 const app = express();
 
-
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true
@@ -16,51 +15,46 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+// Get all products with filtering, sorting, and pagination
 app.get("/api/v1/products", async (req, res) => {
     try {
-        const {
-            page = 1,
-            limit = 9,
-            sort,
-            brand,
-            category,
-            minPrice,
-            maxPrice
-        } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const skip = (page - 1) * limit;
 
         // Build filter object
         const filter = {};
-        if (brand) filter.brand = brand;
-        if (category) filter.category = category;
-        if (minPrice || maxPrice) {
+        if (req.query.brand) filter.brand = req.query.brand;
+        if (req.query.category) filter.category = req.query.category;
+        if (req.query.minPrice || req.query.maxPrice) {
             filter.price = {};
-            if (minPrice) filter.price.$gte = Number(minPrice);
-            if (maxPrice) filter.price.$lte = Number(maxPrice);
+            if (req.query.minPrice) filter.price.$gte = parseFloat(req.query.minPrice);
+            if (req.query.maxPrice) filter.price.$lte = parseFloat(req.query.maxPrice);
         }
 
         // Build sort object
-        const sortObj = {};
-        if (sort) {
-            const [field, order] = sort.split(":");
-            sortObj[field] = order === "desc" ? -1 : 1;
+        const sort = {};
+        if (req.query.sort) {
+            const [field, order] = req.query.sort.split(':');
+            sort[field] = order === 'desc' ? -1 : 1;
         }
 
         const products = await Product.find(filter)
-            .sort(sortObj)
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
+            .sort(sort)
+            .skip(skip)
+            .limit(limit);
 
-        const count = await Product.countDocuments(filter);
+        const total = await Product.countDocuments(filter);
 
         res.json({
             products,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            total
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 });
 
@@ -102,6 +96,24 @@ app.delete("/api/v1/products/:id", async (req, res) => {
         res.json({ message: "Product deleted successfully" });
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+});
+
+// Test endpoint to add sample products
+app.post("/api/v1/test/products", async (req, res) => {
+    try {
+        const sampleProducts = Array.from({ length: 20 }, (_, i) => ({
+            name: `Product ${i + 1}`,
+            brand: `Brand ${Math.floor(i / 4) + 1}`,
+            category: `Category ${Math.floor(i / 5) + 1}`,
+            price: 99.99 + (i * 10),
+            description: `Description for product ${i + 1}`
+        }));
+
+        await Product.insertMany(sampleProducts);
+        res.status(201).json({ message: "Sample products added successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

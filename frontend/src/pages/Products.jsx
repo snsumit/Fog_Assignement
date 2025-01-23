@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from '../components/ProductCard';
 import ProductModal from '../components/ProductModal';
 import { RiAddLine } from 'react-icons/ri';
-
-
+import toast, { Toaster } from 'react-hot-toast';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -25,7 +24,7 @@ const Products = () => {
     try {
       const queryParams = new URLSearchParams({
         page: currentPage,
-        limit: 9,
+        limit: 12,
         ...(filters.brand && { brand: filters.brand }),
         ...(filters.category && { category: filters.category }),
         ...(filters.minPrice && { minPrice: filters.minPrice }),
@@ -34,16 +33,17 @@ const Products = () => {
       });
 
       const response = await fetch(`http://localhost:8000/api/v1/products?${queryParams}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch products');
-      }
       const data = await response.json();
-      
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch products');
+      }
+
       setProducts(data.products);
       setTotalPages(data.totalPages);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      // You might want to add error state and display to user
+      console.error('Error:', error);
+      toast.error('Failed to fetch products');
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +67,7 @@ const Products = () => {
   };
 
   const handleAddProduct = async (productData) => {
+    const loadingToast = toast.loading('Adding product...');
     try {
       const response = await fetch('http://localhost:8000/api/v1/products', {
         method: 'POST',
@@ -76,15 +77,37 @@ const Products = () => {
         body: JSON.stringify(productData),
       });
       
+      toast.dismiss(loadingToast);
+      
       if (response.ok) {
+        toast.success('Product added successfully!', {
+          duration: 3000,
+          position: 'top-right',
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+        });
         fetchProducts();
+      } else {
+        throw new Error('Failed to add product');
       }
     } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error('Failed to add product', {
+        duration: 3000,
+        position: 'top-right',
+        style: {
+          background: '#333',
+          color: '#fff',
+        },
+      });
       console.error('Error adding product:', error);
     }
   };
 
   const handleUpdateProduct = async (productData) => {
+    const loadingToast = toast.loading('Updating product...');
     try {
       const response = await fetch(`http://localhost:8000/api/v1/products/${productData._id}`, {
         method: 'PUT',
@@ -94,44 +117,89 @@ const Products = () => {
         body: JSON.stringify(productData),
       });
       
+      toast.dismiss(loadingToast);
+      
       if (response.ok) {
+        toast.success('Product updated successfully!', {
+          duration: 3000,
+          position: 'top-right',
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
+        });
         fetchProducts();
+      } else {
+        throw new Error('Failed to update product');
       }
     } catch (error) {
+      toast.dismiss(loadingToast);
+      toast.error('Failed to update product', {
+        duration: 3000,
+        position: 'top-right',
+        style: {
+          background: '#333',
+          color: '#fff',
+        },
+      });
       console.error('Error updating product:', error);
     }
   };
 
   const handleDeleteProduct = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        const response = await fetch(`http://localhost:8000/api/v1/products/${productId}`, {
-          method: 'DELETE',
+    // Show a loading toast
+    const loadingToast = toast.loading('Deleting product...');
+    
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/products/${productId}`, {
+        method: 'DELETE',
+      });
+      
+      // Dismiss the loading toast
+      toast.dismiss(loadingToast);
+      
+      if (response.ok) {
+        // Show success toast
+        toast.success('Product deleted successfully!', {
+          duration: 3000,
+          position: 'top-right',
+          style: {
+            background: '#333',
+            color: '#fff',
+          },
         });
-        
-        if (response.ok) {
-          fetchProducts();
-        }
-      } catch (error) {
-        console.error('Error deleting product:', error);
+        fetchProducts();
+      } else {
+        throw new Error('Failed to delete product');
       }
+    } catch (error) {
+      // Dismiss loading toast and show error toast
+      toast.dismiss(loadingToast);
+      toast.error('Failed to delete product', {
+        duration: 3000,
+        position: 'top-right',
+        style: {
+          background: '#333',
+          color: '#fff',
+        },
+      });
+      console.error('Error deleting product:', error);
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-     <div className='bg-[url(./front.png)] bg-left bg-cover bg-no-repeat w-full h-80 relative'>
+      <Toaster />
+      
+      <div className='bg-[url(./front.png)] bg-left bg-cover bg-no-repeat w-full h-80 relative'>
         <div className='absolute top-0 left-0 right-0 bottom-0 bg-white bg-opacity-55'></div>
         <div className='absolute top-0 left-0 right-0 bottom-0 flex-col text-black flex justify-center gap-2 items-center'>
           <span className='font-semibold text-4xl'>Shop</span>
           <span className='font-semibold text-sm' >Home<i class="ri-arrow-right-wide-line"></i> Shop</span>
         </div>
-
       </div>
 
-     
       <div className="container mx-auto   px-4 py-4 sm:py-8 flex-grow">
-        
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4  mb-6">
           <h1 className="text-xl sm:text-2xl font-bold">Products</h1>
           <button
@@ -145,7 +213,6 @@ const Products = () => {
           </button>
         </div>
 
-      
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <input
             type="text"
@@ -190,14 +257,12 @@ const Products = () => {
           </select>
         </div>
 
-       
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : (
           <>
-            
             {products.length > 0 ? (
               <div className="grid grid-cols-2  sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3 sm:gap-4 justify-items-center">
                 {products.map((product) => (
@@ -218,10 +283,8 @@ const Products = () => {
               </div>
             )}
 
-           
             {totalPages > 1 && (
               <div className="mt-6 sm:mt-8 flex justify-center gap-1 sm:gap-2 flex-wrap">
-              
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
@@ -234,7 +297,6 @@ const Products = () => {
                   Previous
                 </button>
 
-               
                 {[...Array(totalPages)].map((_, index) => (
                   <button
                     key={index}
@@ -249,7 +311,6 @@ const Products = () => {
                   </button>
                 ))}
 
-                
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
@@ -266,7 +327,6 @@ const Products = () => {
           </>
         )}
 
-       
         <ProductModal
           isOpen={isModalOpen}
           onClose={() => {
@@ -277,7 +337,6 @@ const Products = () => {
           product={selectedProduct}
         />
       </div>
-      
     </div>
   );
 };

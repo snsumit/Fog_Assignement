@@ -191,7 +191,7 @@ const Products = () => {
     <div className="min-h-screen flex flex-col">
       <Toaster />
       
-      <div className='bg-[url(./front.png)] bg-left bg-cover bg-no-repeat w-full h-80 relative'>
+      <div className='bg-[url(/public/front.png)] bg-left bg-cover bg-no-repeat w-full h-80 relative'>
         <div className='absolute top-0 left-0 right-0 bottom-0 bg-white bg-opacity-55'></div>
         <div className='absolute top-0 left-0 right-0 bottom-0 flex-col text-black flex justify-center gap-2 items-center'>
           <span className='font-semibold text-4xl'>Shop</span>

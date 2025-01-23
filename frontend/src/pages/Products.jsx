@@ -32,7 +32,7 @@ const Products = () => {
         ...(filters.sort && { sort: filters.sort })
       });
 
-      const response = await fetch(`http://localhost:8000/api/v1/products?${queryParams}`);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/products?${queryParams}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -69,7 +69,7 @@ const Products = () => {
   const handleAddProduct = async (productData) => {
     const loadingToast = toast.loading('Adding product...');
     try {
-      const response = await fetch('http://localhost:8000/api/v1/products', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ const Products = () => {
   const handleUpdateProduct = async (productData) => {
     const loadingToast = toast.loading('Updating product...');
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/products/${productData._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/products/${productData._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ const Products = () => {
     const loadingToast = toast.loading('Deleting product...');
     
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/products/${productId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/products/${productId}`, {
         method: 'DELETE',
       });
       
